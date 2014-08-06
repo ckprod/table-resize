@@ -3,7 +3,7 @@ table-resize
 
 Adds basic functionality to html tables: resizing.
 
-###Sample
+###Samples
 
 See [here](http://irhc.github.io/table-resize) for some samples.
 
