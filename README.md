@@ -62,6 +62,11 @@ Any html tables which have at least one tr tag can be used (a thead or tbody tag
 </table>
 ```
 
+###Options
+
+distance: Sets the radius of a circle, where no drag action is triggered as long as mouse movements are within the circle.
+minWidth:
+
 ###How to use
 
 In the head section of your html file put
@@ -76,8 +81,17 @@ Just before the end of your body section put
 <script src='table-resize.min.js'></script>
 <script>
   new TableResize(document.getElementById('example'));
+  //new TableResize(document.getElementById('example'), {distance: 100, minWidth: 60});
 </script>
 ```
+
+###Supported browsers
+
+- Internet Explorer 8 and newer
+- Opera
+- Chrome
+- Firefox
+- Safari 5.1.7 (and highly possible newer)
 
 ###References
 
