@@ -1,22 +1,3 @@
-;
-if (typeof DEBUG === "undefined") DEBUG = true;
-
-// debugging utils
-function log() {
-    var a = arguments[0],
-                    s = arguments.length > 1 ? Array.prototype.slice.call(arguments) : a;
-
-    if (typeof console !== "undefined" && typeof console.log !== "undefined") {
-        console[/error/i.test(a) ? 'error' : /warn/i.test(a) ? 'warn' : 'log'](s);
-    } else {
-        alert(s);
-    }
-}
-
-function benchmark(text, time) {
-    log(text + " (" + (new Date().getTime() - time.getTime()) + "ms)");
-}
-
 (function () {
     "use strict";
 
@@ -63,12 +44,11 @@ function benchmark(text, time) {
 			}
 
 			return pageY;
-		}		
+		}
 		
 		// prototype functions
 		
         function _mouseDown(event) {
-		
 			// ie8 support
             event = getEvent(event);
 
@@ -93,7 +73,7 @@ function benchmark(text, time) {
             if (eventWhich(event) !== 1) {
                 return true;
             }
-            
+
             // lets start and check distance first
             if (this.options.distance == 0) {
 				this._mouseStarted = this._mousePrepareDrag(event) !== false;
@@ -105,7 +85,7 @@ function benchmark(text, time) {
 					
 					return true;
                 }
-            } else { // 
+            } else {
 				this._mousePrepareClick(event);
 			}
 
@@ -138,6 +118,7 @@ function benchmark(text, time) {
 
             // drag functionality
             if (this._mouseStarted) {
+			
                 this._mouseDrag(event);
                 
 				// ie8 support
@@ -212,20 +193,32 @@ function benchmark(text, time) {
 		};
 	})();
 	
-    function SampleHandler(table, options) {
+    function ResizeHandler(table, options) {
 
-		//set options
-		this.options.distance = options.distance;
-		this.options.minWidth = options.minWidth;
+		//set default options
+		this.options.minWidth = 30;
+		this.options.restoreState = true;
 		
+        // set options
+        for (var opt in this.options)
+            if (options.hasOwnProperty(opt))
+                this.options[opt] = options[opt];
+		
+		// table
+		this.table = table;
         // header row
         this.hr = table.rows[0];
+		// number of columns
+		this.nc = this.hr.cells.length;
         // number of rows
         this.nr = table.rows.length;
+
+		this._init();
+		
     }
     (function () {
-		SampleHandler.prototype = new MouseHandler();
-		SampleHandler.prototype.constructor = SampleHandler;
+		ResizeHandler.prototype = new MouseHandler();
+		ResizeHandler.prototype.constructor = ResizeHandler;
 		
 		// helper functions
 		
@@ -240,24 +233,6 @@ function benchmark(text, time) {
 
 			return pageX;
 		}
-		function eventPageY(event) {
-			var pageY = event.pageY;
-
-			if (typeof pageY == 'undefined') {
-				var body = document.body;
-				var docElem = document.documentElement;
-				pageY = event.clientY + (docElem && docElem.scrollTop || body && body.scrollTop || 0) - (docElem && docElem.clientTop || body && body.clientTop || 0);
-			}
-
-			return pageY;
-		}
-		function setStatus(element) {
-			var text = 'Status: ';
-			for (var i = 1; i<arguments.length; i++) {
-				text += '<br>- ' + arguments[i];
-			}
-			element.innerHTML = text;
-		}
         function elementStyleProperty(element, prop) {
             if (window.getComputedStyle) {
                 return window.getComputedStyle(element, "").getPropertyValue(prop);
@@ -271,36 +246,129 @@ function benchmark(text, time) {
                 }
                 return element.currentStyle[prop]
             }
-        };
+        }
 		function numericProperty(prop) {
             return (typeof prop == 'undefined' || prop == '' || prop == null) ? 0 : parseInt(prop);
-        };
+        }
+		function eventTarget (event) {
+			return event.target || event.srcElement;
+		}
 		
-		// public functions
+		// storage functions
+		// load state and returns the array
+		function loadState(key) {
+			var state = localStorage.getItem(key);
+
+			if (state != null) {
+				try {
+					state = JSON.parse(state);
+				} catch (e) {
+					state = new Array();
+				}
+			} else {
+				state = new Array();
+			}
+
+			return state;
+		}
+		function getIndex(state, searchId) {
+			//find element
+			var index = state.findIndex(function (element, index, array) {
+				var id = element.id;
+				if (id != searchId) {
+					return false;
+				} else {
+					return true;
+				}
+			});
+			
+			return index;
+		}
+		function saveState(key, table /* name, prop*/) {
+			// ie in offline mode can't use localStorage,
+			// use alternative storage like
+			// https://github.com/andris9/simpleStorage
+			// or many more alternatives on
+			// https://github.com/Modernizr/Modernizr/wiki/HTML5-Cross-browser-Polyfills
+			if (!localStorage) {
+                console.log('localStorage not supported or not usable (i.e. ie in offline mode).');
+				return; 
+			}
+			
+			var state = loadState(key),
+				id = table.getAttribute('id'),
+				element = {id: id},
+				index = getIndex(state, id);
+				
+			for (var i = 2; i < arguments.length; i+=2) {
+				element[arguments[i]] = arguments[i+1];
+			}
+
+			// place element
+			if (index < 0) {
+				state.push(element);
+			} else {
+				state.splice(index, 1, element);
+			}
+
+			localStorage.setItem(key, JSON.stringify(state));
+		}
+		function restoreState(key, table, name) {
+			// ie in offline mode can't use localStorage,
+			// use alternative storage like
+			// https://github.com/andris9/simpleStorage
+			// or many more alternatives on
+			// https://github.com/Modernizr/Modernizr/wiki/HTML5-Cross-browser-Polyfills
+			if (!localStorage) {
+                console.log('localStorage not supported or not usable (i.e. ie in offline mode).');
+				return; 
+			}
+			
+			var state = loadState(key),
+				id = table.getAttribute('id'),
+				index = getIndex(state, id);
 		
-		//TableDrag.prototype.refresh = function () { };
+			if (index >= 0) {
+				var element = state[index],
+					memory = element[name],
+					length = memory.length,
+					nc = table.rows[0].cells.length;
 		
+				//check length
+				if (nc == length) {
+					for (var i = 0; i < nc; i++) {
+						var cell = table.rows[0].cells[i];
+						cell.style.maxWidth = cell.style.width = memory[i];
+					}
+				}
+			}			
+		}
+
 		// private functions
 		
-		SampleHandler.prototype._init = function () {
+		ResizeHandler.prototype._init = function () {
+            for (var i = 0; i < this.nc; i++) {
+                var cell = this.hr.cells[i],
+					width = elementStyleProperty(cell, 'width'),
+					width = width == 'auto'?(cell.clientWidth-numericProperty(elementStyleProperty(cell, 'paddingLeft'))-numericProperty(elementStyleProperty(cell, 'paddingRight')))+'px':width; // ie8 support
+                cell.style.width = width;
+            }
+			
+			if (this.options.restoreState)
+				restoreState('table-resize', this.table, 'resize');
 		};
-		
+
 		// the overriden placeholder methods
 		
-		SampleHandler.prototype._mousePrepareClick = function () {
-		};
-		SampleHandler.prototype._mousePrepareDrag = function (event) {
-            // initial column
-            this.ic = event.target.parentNode.parentNode.cellIndex;
-            var initialColumn = this.ic;
-
-            if (!this.hr || initialColumn < 0 || this.hr.length < initialColumn) return false;
-
-            // set true width
-            var cell = this.hr.cells[initialColumn],
-                width = window.getComputedStyle(cell, null).getPropertyValue("width");
+		ResizeHandler.prototype._mousePrepareDrag = function (event) {
+			// initial column
+            this.ic = eventTarget(event).parentNode.parentNode.cellIndex;
+            var initialColumn = this.ic,
+                cell = this.hr.cells[initialColumn],
+                width = numericProperty(cell.style.width);
+		
             for (var i = 0; i < this.nr; i++) {
-                cell = table.rows[i].cells[initialColumn];
+                cell = this.table.rows[i].cells[initialColumn];
                 cell.style.maxWidth = cell.style.width = width;
             }
 
@@ -310,11 +378,11 @@ function benchmark(text, time) {
 
             return true;
 		};
-		SampleHandler.prototype._mouseDrag = function (event) {
-            var dist = event.pageX - this._mouseDownEvent.pageX,
+		ResizeHandler.prototype._mouseDrag = function (event) {
+            var dist = eventPageX(event) - eventPageX(this._mouseDownEvent),
                 initialColumn = this.ic,
                 cell = this.hr.cells[initialColumn],
-                width = parseInt(cell.style.width);
+                width = numericProperty(cell.style.width);
 
             if (width <= -dist) {
                 this._mouseStopDrag(event);
@@ -323,69 +391,130 @@ function benchmark(text, time) {
                 if (newWidth > this.options.minWidth) {
 
                     for (var i = 0; i < this.nr; i++) {
-                        cell = table.rows[i].cells[initialColumn];
-                        cell.style.maxWidth = cell.style.width = newWidth + 'px';
+                        cell = this.table.rows[i].cells[initialColumn];
+						cell.style.maxWidth = cell.style.width = newWidth + 'px';
                     }
 
-                    this._mouseDownEvent = event;
+					this._mouseDownEvent = event;
+					if (!event.which) { // detect ie8
+						var copy = {};
+						for (var attr in event) {
+							copy[attr] = event[attr];
+						}
+						this._mouseDownEvent = copy;
+					}
                 }
             }
 		}
-		SampleHandler.prototype._mouseExecuteClick = function () {
-		};
-		SampleHandler.prototype._mouseStopDrag = function () {
-            // set width
-            var initialColumn = this.ic,
-                cell = this.hr.cells[initialColumn],
-                width = window.getComputedStyle(cell, null).getPropertyValue("width");
-
-            for (var i = 0; i < this.nr; i++) {
-                cell = table.rows[i].cells[initialColumn];
-                cell.style.maxWidth = cell.style.width = width;
+		ResizeHandler.prototype._mouseStopDrag = function () {
+			var temp = new Array(this.nc);
+            for (var i = 0; i < this.nc; i++) {
+                var cell = this.hr.cells[i];
+                temp[i] = cell.style.width;
             }
 
+			saveState('table-resize', this.table, 'resize', temp);
+		
             // restore mouse cursor
             document.body.style.cursor = this.cur;
 		};
 	})();
 
-	
+    // This simple and small javascript solution for resizing html tables
+    // is based on
+    // http://bz.var.ru/comp/web/resizable.html
+    // Browser support: IE9+, current Chrome, Firefox, etc.
     function TableResize(table, options) {
 		// check input
         if (table && table.tagName !== 'TABLE') {
-            return '';
+			console.log('ERROR: DOM element/input is not a table!');
+            return;
         }
 		
         // check empty table
         if (!(table && table.rows && table.rows.length > 0)) {
-            return '';
+			console.log('WARNING: Empty table.');
+            return;
         }
 
-        var dragHandler = new DragHandler(table, options);
+        var resizeHandler = new ResizeHandler(table, options || {});
 		
         // attach handlers to each cell of the header row.
-        for (var i = 0; i < dragHandler.hr.cells.length; i++) {
-            var cell = dragHandler.hr.cells[i];
+        for (var i = 0; i < resizeHandler.hr.cells.length; i++) {
+            var cell = resizeHandler.hr.cells[i];
             cell.innerHTML = '<div class=\"resize-base\"><div class=\"resize-elem\"></div><div class=\"resize-text\">' + cell.innerHTML + '</div></div>';
 
             addEvent(cell.childNodes[0].childNodes[0], 'mousedown', function (event) {
-                dragHandler._mouseDown(event);
+                resizeHandler._mouseDown(event);
             });
         }
     }
 	
     // export
     
-    // based on
-    // https://github.com/tristen/tablesort/blob/gh-pages/src/tablesort.js
-    // line 297 - 301
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = TableResize;
     } else {
         window.TableResize = TableResize;
     }
-    
+
     // polyfills and public code snippets
+
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex
+	if (!Array.prototype.findIndex) {
+		try {
+			Object.defineProperty(Array.prototype, 'findIndex', {
+				enumerable: false,
+				configurable: true,
+				writable: true,
+				value: function (predicate) {
+					if (this == null) {
+						throw new TypeError('Array.prototype.find called on null or undefined');
+					}
+					if (typeof predicate !== 'function') {
+						throw new TypeError('predicate must be a function');
+					}
+					var list = Object(this);
+					var length = list.length >>> 0;
+					var thisArg = arguments[1];
+					var value;
+
+					for (var i = 0; i < length; i++) {
+						if (i in list) {
+							value = list[i];
+							if (predicate.call(thisArg, value, i, list)) {
+								return i;
+							}
+						}
+					}
+					return -1;
+				}
+			});
+		} catch (e) { // ie8 support
+			Array.prototype.findIndex = function(predicate) {
+					if (this == null) {
+						throw new TypeError('Array.prototype.find called on null or undefined');
+					}
+					if (typeof predicate !== 'function') {
+						throw new TypeError('predicate must be a function');
+					}
+					var list = Object(this);
+					var length = list.length >>> 0;
+					var thisArg = arguments[1];
+					var value;
+
+					for (var i = 0; i < length; i++) {
+						if (i in list) {
+							value = list[i];
+							if (predicate.call(thisArg, value, i, list)) {
+								return i;
+							}
+						}
+					}
+					return -1;
+			}
+		}
+	}
 
     // http://ejohn.org/apps/jselect/event.html
     function addEvent(obj, type, fn) {
