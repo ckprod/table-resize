@@ -64,9 +64,9 @@ Any html tables which have at least one tr tag can be used (a thead or tbody tag
 
 ###Options
 
-distance (default 0): Sets the radius of a circle, where no drag action is triggered as long as mouse movements are within the circle.
-minWidth (default 30): Sets the minimum width of the cells.
-restoreState (default true): localStorage is used to remember the last width of the cells if true.
+- distance (default 0): Sets the radius of a circle, where no drag action is triggered as long as mouse movements are within the circle.
+- minWidth (default 30): Sets the minimum width of the cells.
+- restoreState (default true): localStorage is used to remember the last width of the cells if true.
 
 ###How to use
 
