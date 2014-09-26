@@ -212,6 +212,9 @@ function benchmark(text, time) {
 		};
 	})();
 	
+    // This simple and small javascript solution for resizing html tables
+    // is based on
+    // http://bz.var.ru/comp/web/resizable.html
     function ResizeHandler(table, options) {
 
 		//set default options
@@ -219,9 +222,11 @@ function benchmark(text, time) {
 		this.options.restoreState = true;
 		
         // set options
-        for (var opt in this.options)
-            if (options.hasOwnProperty(opt))
-                this.options[opt] = options[opt];
+		var newOptions = {};
+        for (var opt in this.options) {
+			newOptions[opt] = (typeof options[opt] == 'undefined') ?  this.options[opt] : options[opt];
+		}
+		this.options = newOptions;
 		
 		// table
 		this.table = table;
@@ -432,17 +437,14 @@ function benchmark(text, time) {
                 temp[i] = cell.style.width;
             }
 
-			saveState('table-resize', this.table, 'resize', temp);
+			if (this.options.restoreState)
+				saveState('table-resize', this.table, 'resize', temp);
 		
             // restore mouse cursor
             document.body.style.cursor = this.cur;
 		};
 	})();
 
-    // This simple and small javascript solution for resizing html tables
-    // is based on
-    // http://bz.var.ru/comp/web/resizable.html
-    // Browser support: IE9+, current Chrome, Firefox, etc.
     function TableResize(table, options) {
 		// check input
         if (table && table.tagName !== 'TABLE') {
@@ -461,6 +463,7 @@ function benchmark(text, time) {
         // attach handlers to each cell of the header row.
         for (var i = 0; i < resizeHandler.hr.cells.length; i++) {
             var cell = resizeHandler.hr.cells[i];
+			
             cell.innerHTML = '<div class=\"resize-base\"><div class=\"resize-elem\"></div><div class=\"resize-text\">' + cell.innerHTML + '</div></div>';
 
             addEvent(cell.childNodes[0].childNodes[0], 'mousedown', function (event) {

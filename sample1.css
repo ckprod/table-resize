@@ -1,6 +1,7 @@
 .sample1 {
-    font-family: Segoe UI, sans-serif;
-    font-size: 10pt;
+    font-family: "Segoe UI", Optima, Arial, sans-serif;
+    font-size: 14px;
+	background-color: white;
 }
 
 .sample1 thead > tr > th {
