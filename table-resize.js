@@ -1,11 +1,8 @@
 (function () {
     "use strict";
 
-	// template for left mouse button actions: click vs drag
-	// based on
-	// https://github.com/jquery/jquery-ui/blob/master/ui/mouse.js
-	// with basic ie8 support
-	// if you want more special ie8 functionality or have some ie8 bugs see the comments and code in the mentioned url above
+	// Dragging (drag'n'drop) columns of html tables.
+	// https://github.com/irhc/mouse-handler
     function MouseHandler () {
 		//this._mouseDownEvent
 		//this._mouseStarted
