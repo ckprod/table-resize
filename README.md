@@ -87,9 +87,21 @@ If you don't want to use default options, pass in an options object as second pa
 
 ###Options
 
-- distance (default 0): Sets the radius of a circle, where no drag action is triggered as long as mouse movements are within the circle.
-- minWidth (default 30): Sets the minimum width of the cells.
-- restoreState (default true): localStorage is used to remember the last width of the cells if true.
+- **distance**: [type: number] [default: 0] [version: 1.0]
+
+Sets the radius of a circle, where no drag action is triggered as long as mouse movements are within the circle.
+
+- **minWidth**: [type: number] [default: 30] [version: 1.0]
+
+Sets the minimum width of the cells.
+
+- **restoreState**: [type: boolean] [default: true] [version: 1.0]
+
+localStorage is used to remember the last width of the cells if true.
+
+- **fixed**: [type: boolean] [default: false] [version: 1.1]
+
+If fixed is set true resizing a column shrinks or expands the next column. Thus the overall table width doesn't change. In the default behavior (fixed = false) resizing of a column works independently.
 
 ###Supported browsers
 
