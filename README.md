@@ -82,7 +82,7 @@ Just before the end of your body section simply put
 If you don't want to use default options, pass in an options object as second parameter
 
 ```html
-  new TableResize(document.getElementById('example'), {distance: 100, minWidth: 60, restoreState: true});
+  new TableResize(document.getElementById('example'), {distance: 100, minWidth: 60, restoreState: true, fixed: true});
 ```
 
 ###Options
